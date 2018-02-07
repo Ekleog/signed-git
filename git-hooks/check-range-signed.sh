@@ -26,7 +26,7 @@ function check_range_signed() {
         fi
 
         rebuild_gpg_keyring_at "$GNUPGHOME" "$commit"
-    done
+    done || return 1
 
     if ! git verify-commit "$to" > /dev/null 2>&1; then
         echo "  Unable to verify tip commit '$commit'!" >&2
