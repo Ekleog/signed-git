@@ -16,8 +16,11 @@ function check_range_signed() {
     git rev-list --first-parent "$from..$to" -- keys/keys | \
             tac | \
             while read commit; do
-        if ! git verify-commit "$commit"; then
-            echo "Unable to verify commit '$commit' which changed the keys directory!" >&2
+        echo "  Commit '$commit' changed the keys directory, checking it..."
+        if git verify-commit "$commit" > /dev/null 2>&1; then
+            echo "    OK"
+        else
+            echo "    Unable to verify commit '$commit' which changed the keys directory!" >&2
             rm -Rf "$GNUPGHOME"
             return 1
         fi
@@ -25,8 +28,8 @@ function check_range_signed() {
         rebuild_gpg_keyring_at "$GNUPGHOME" "$commit"
     done
 
-    if ! git verify-commit "$to"; then
-        echo "Unable to verify tip commit '$commit'!" >&2
+    if ! git verify-commit "$to" > /dev/null 2>&1; then
+        echo "  Unable to verify tip commit '$commit'!" >&2
         rm -Rf "$GNUPGHOME"
         return 1
     fi
@@ -43,5 +46,5 @@ function rebuild_gpg_keyring_at() {
 
     git show "$commit:keys/keys" | tail -n +3 | \
         xargs -I '{}' git show "$commit:keys/keys/{}" | \
-        gpg2 --homedir "$keyring" --import
+        gpg2 --homedir "$keyring" --import --quiet
 }
